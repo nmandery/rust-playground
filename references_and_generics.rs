@@ -1,4 +1,5 @@
 use std::fmt::Show;
+use std::thread::Thread;
 
 fn modify_by_ref(y: &mut int) {
     let new_y = 7i;
@@ -24,17 +25,17 @@ fn join_into_string<V: Show, I: Iterator<V>>(iter: &mut I, sep: &str) -> String 
 
 fn main() {
     let mut x = 5i;
-    println!("initial x: {}", x)
+    println!("initial x: {}", x);
 
     modify_by_ref(&mut x);
-    println!("modify_by_ref x: {}", x)
+    println!("modify_by_ref x: {}", x);
 
     // block
     {
         let x = 2i;
-        println!("inside block x: {}", x)
+        println!("inside block x: {}", x);
     }
-    println!("outside block x: {}", x)
+    println!("outside block x: {}", x);
 
 
     // join iterator into string
@@ -61,16 +62,10 @@ fn main() {
     for v in ai.iter() {
         fnc("closure", v);
     }
-    for v in ai.iter() {
-        let v2 = v.clone();
-        spawn(move || {
-            println!("spawned closure: {}", v2);
-        });
-    }
 
     // channels
     let (tx1, rx1) = channel();
-    spawn(move || {
+    let tguard = Thread::spawn(move || {
         loop {
             match rx1.recv_opt() {
                 Ok(v) => {
@@ -87,6 +82,7 @@ fn main() {
     for v in ai.iter() {
         tx1.send(v.clone());
     }
+    drop(tx1); // close channel to end spawned thread
 
 
 }
