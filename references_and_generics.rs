@@ -14,9 +14,9 @@ fn join_into_string<V: Show, I: Iterator<V>>(iter: &mut I, sep: &str) -> String 
     let mut s = "".to_string();
     while let Some(v) = iter.next() {
         if !s.is_empty() {
-            s = s + sep;
+            s.push_str(sep);
         }
-        s = s + format!("{}", v).as_slice();
+        s.push_str(format!("{}", v).as_slice());
     }
     s
 }
@@ -47,7 +47,46 @@ fn main() {
     }
     println!("joining in loop: s = {}", s);
 
+
     // generic variant of joining interator into string
     let mut iter = range(0i, x);
     println!("joining using generics: s = {}", join_into_string(&mut iter, ", "));
+
+
+    // closure
+    let fnc = |txt:&str, v:&int| { 
+        println!("{}: v = {}", txt, v);
+    };
+    let ai = [20i, 45i, 67i].iter().map(|&v| {v*2}).collect::<Vec<int>>();
+    for v in ai.iter() {
+        fnc("closure", v);
+    }
+    for v in ai.iter() {
+        let v2 = v.clone();
+        spawn(move || {
+            println!("spawned closure: {}", v2);
+        });
+    }
+
+    // channels
+    let (tx1, rx1) = channel();
+    spawn(move || {
+        loop {
+            match rx1.recv_opt() {
+                Ok(v) => {
+                    println!("recieved on channel: {}", v);
+                },
+                Err(()) => {
+                    println!("Could not receive - channel closed");
+                    break
+                }
+            };
+        }     
+    });
+
+    for v in ai.iter() {
+        tx1.send(v.clone());
+    }
+
+
 }
